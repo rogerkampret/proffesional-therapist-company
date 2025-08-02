@@ -9,6 +9,13 @@ const Hero: React.FC = () => {
     }
   };
 
+  const scrollToAbout = () => {
+    const element = document.getElementById('about');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="home" className="relative min-h-screen flex items-center bg-gradient-to-br from-blue-50 to-green-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -30,11 +37,16 @@ const Hero: React.FC = () => {
               <button
                 onClick={scrollToContact}
                 className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center space-x-2 font-semibold group"
+                aria-label="Schedule consultation"
               >
                 <span>Schedule Consultation</span>
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-200" />
               </button>
-              <button className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 font-semibold">
+              <button 
+                onClick={scrollToAbout}
+                className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 font-semibold"
+                aria-label="Learn more about our services"
+              >
                 Learn More
               </button>
             </div>
@@ -70,6 +82,10 @@ const Hero: React.FC = () => {
                 src="https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg?auto=compress&cs=tinysrgb&w=800"
                 alt="Therapy session in a comfortable, welcoming environment"
                 className="rounded-2xl shadow-2xl w-full h-[600px] object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/5212317/pexels-photo-5212317.jpeg?auto=compress&cs=tinysrgb&w=800';
+                }}
+                loading="lazy"
               />
             </div>
             <div className="absolute -bottom-6 -right-6 w-full h-full bg-blue-200 rounded-2xl -z-10"></div>

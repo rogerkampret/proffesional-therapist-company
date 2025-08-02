@@ -7,6 +7,9 @@ import Therapists from './components/Therapists';
 import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import FAQ from './components/FAQ';
+import InsuranceInfo from './components/InsuranceInfo';
+import TestimonialForm from './components/TestimonialForm';
 
 function App() {
   return (
@@ -17,7 +20,10 @@ function App() {
         <About />
         <Services />
         <Therapists />
+        <InsuranceInfo />
         <Testimonials />
+        <FAQ />
+        <TestimonialForm />
         <Contact />
       </main>
       <Footer />
