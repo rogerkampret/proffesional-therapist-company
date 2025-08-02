@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Filter, CreditCard, User, Briefcase } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Filter, CreditCard, User, Briefcase, AlertCircle } from 'lucide-react';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +17,8 @@ const Contact: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [filteredTherapists, setFilteredTherapists] = useState([]);
+  const [errors, setErrors] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mock therapist data with gender information
   const therapists = [
@@ -28,24 +30,62 @@ const Contact: React.FC = () => {
     { id: 6, name: 'Robert Williams', gender: 'male', specialties: ['Group Therapy', 'PTSD Treatment'] }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    const newErrors: any = {};
+    
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    if (formData.phone && !/^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.paymentMethod === 'self-pay') {
-      setShowPayment(true);
-    } else {
-      setIsSubmitted(true);
-      setTimeout(() => setIsSubmitted(false), 5000);
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
+    
+    // Simulate API call
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      if (formData.paymentMethod === 'self-pay') {
+        setShowPayment(true);
+      } else {
+        setIsSubmitted(true);
+        setTimeout(() => setIsSubmitted(false), 5000);
+      }
+    } catch (error) {
+      console.error('Submission failed:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const newFormData = {
-      ...prev,
+      ...formData,
       [e.target.name]: e.target.value
     };
     
     setFormData(newFormData);
+    
+    // Clear error when user starts typing
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: ''
+      });
+    }
     
     // Filter therapists based on gender preference
     if (e.target.name === 'therapistGenderPreference' && e.target.value) {
@@ -56,13 +96,19 @@ const Contact: React.FC = () => {
     }
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
+    setIsLoading(true);
     // Simulate payment processing
-    setTimeout(() => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 3000));
       setShowPayment(false);
       setIsSubmitted(true);
       setTimeout(() => setIsSubmitted(false), 5000);
-    }, 2000);
+    } catch (error) {
+      console.error('Payment failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -133,16 +179,27 @@ const Contact: React.FC = () => {
                 <div className="flex space-x-4">
                   <button
                     onClick={() => setShowPayment(false)}
-                    className="flex-1 border border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    disabled={isLoading}
+                    className="flex-1 border border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
                   >
                     Back to Form
                   </button>
                   <button
                     onClick={handlePayment}
-                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2"
+                    disabled={isLoading}
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2 disabled:opacity-50"
                   >
-                    <CreditCard size={20} />
-                    <span>Pay $150.00</span>
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard size={20} />
+                        <span>Pay $150.00</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -160,9 +217,18 @@ const Contact: React.FC = () => {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                        errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
                       placeholder="Your full name"
+                      aria-describedby={errors.name ? 'name-error' : undefined}
                     />
+                    {errors.name && (
+                      <p id="name-error" className="text-red-600 text-sm mt-1 flex items-center">
+                        <AlertCircle size={16} className="mr-1" />
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -175,9 +241,18 @@ const Contact: React.FC = () => {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                        errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
                       placeholder="your@email.com"
+                      aria-describedby={errors.email ? 'email-error' : undefined}
                     />
+                    {errors.email && (
+                      <p id="email-error" className="text-red-600 text-sm mt-1 flex items-center">
+                        <AlertCircle size={16} className="mr-1" />
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -286,9 +361,18 @@ const Contact: React.FC = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                        errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
                       placeholder="(123) 456-7890"
+                      aria-describedby={errors.phone ? 'phone-error' : undefined}
                     />
+                    {errors.phone && (
+                      <p id="phone-error" className="text-red-600 text-sm mt-1 flex items-center">
+                        <AlertCircle size={16} className="mr-1" />
+                        {errors.phone}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="service" className="block text-sm font-medium text-gray-700 mb-2">
@@ -390,19 +474,29 @@ const Contact: React.FC = () => {
 
                 <button
                   type="submit"
-                  className={`w-full py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-semibold group ${
+                  disabled={isLoading}
+                  className={`w-full py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-semibold group disabled:opacity-50 ${
                     formData.paymentMethod === 'self-pay' 
                       ? 'bg-green-600 hover:bg-green-700 text-white' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
                 >
-                  <span>
-                    {formData.paymentMethod === 'self-pay' ? 'Proceed to Payment' : 'Send Message'}
-                  </span>
-                  {formData.paymentMethod === 'self-pay' ? (
-                    <CreditCard size={20} className="group-hover:translate-x-1 transition-transform duration-200" />
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Submitting...</span>
+                    </>
                   ) : (
-                    <Send size={20} className="group-hover:translate-x-1 transition-transform duration-200" />
+                    <>
+                      <span>
+                        {formData.paymentMethod === 'self-pay' ? 'Proceed to Payment' : 'Send Message'}
+                      </span>
+                      {formData.paymentMethod === 'self-pay' ? (
+                        <CreditCard size={20} className="group-hover:translate-x-1 transition-transform duration-200" />
+                      ) : (
+                        <Send size={20} className="group-hover:translate-x-1 transition-transform duration-200" />
+                      )}
+                    </>
                   )}
                 </button>
 
